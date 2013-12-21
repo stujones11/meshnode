@@ -116,8 +116,8 @@ minetest.register_entity("meshnode:ctrl", {
 			end
 			if speed > MESHNODE_MAX_SPEED then
 				speed = MESHNODE_MAX_SPEED
-			elseif speed < 0 then
-				speed = 0
+			elseif speed < 0 - MESHNODE_MAX_SPEED then
+				speed = 0 - MESHNODE_MAX_SPEED
 			end
 			if ctrl.jump then
 				lift = lift + 0.1
