@@ -1,0 +1,50 @@
+Meshnodes for Minetest [meshnode]
+=================================
+
+Meshnodes is a mod that transforms ordinary cubic nodes into a connected
+array of replica entities to which players can attach to and manoeuvre.
+
+To use, simply build or place a model using only fully cubic nodes
+(i.e. no stairs, slabs or nodeboxes for now). Next place a meshnode controller
+in the appropriate position, the operator will be attached directly on top
+of the controller node. Now right click the controller and enter the
+minimum and maximum extents of the model (relative to the controller x,y,z)
+e.g. for a 3x3 square of nodes with the controller placed above the center
+node, the relative positions would be minp = -1,-1,-1 maxp = 1,0,1
+
+Alternatively, if you are using worldedit, you can use the position
+markers to define the extents of the model. However, this must be done
+before the controller is placed.
+
+Controls
+========
+
+[Up]	Forward
+[Down]	Reverse
+[Left]	Rotate Left
+[Right]	Rotate Right
+[Jump]	Up
+[Sneak]	Down
+[RMB]	Attach/Detach
+
+Limitations
+===========
+
+Only works for nodes with drawtype normal, allfaces_optional or glasslike.
+Models will disappear or become detached from the controller if they become
+unloaded. This can cause the server to warn against excessive objects and
+destroy them accordingly.
+
+I have tried a number of ways the get the models to persist after a server
+restart but so far all of my efforts have been thwarted by minetest's buggy
+object management system.  I also wanted to be able to attach 'passengers'
+to the entities, however, this has not been possible for the same reason.
+
+Know Issues
+===========
+
+The player controlling the entity may appear to be connected to the wrong
+part of the model when viewed by a player that was not present during the
+initial attachment. Currently the only solution is for the operator to
+detach then re-attach to the model in the presence of said player.
+

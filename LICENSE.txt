@@ -1,0 +1,5 @@
+Meshnodes for Minetest [meshnode]
+=================================
+
+Copyright (C) 2013 Stuart Jones - LGPL
+

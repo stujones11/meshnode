@@ -1,0 +1,14 @@
+-- Meshnode configuration (defaults)
+
+-- Maximum Entity Speed
+MESHNODE_MAX_SPEED = 2
+
+-- Maximum Up/Down Velocity
+MESHNODE_MAX_LIFT = 1
+
+-- Rotational Step (Radians)
+MESHNODE_YAW_AMOUNT = 0.02
+
+-- Maximum Entity Area
+MESHNODE_MAX_RADIUS = 10
+
