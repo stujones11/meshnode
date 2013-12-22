@@ -1,7 +1,7 @@
 MESHNODE_MAX_SPEED = 2
 MESHNODE_MAX_LIFT = 1
 MESHNODE_YAW_AMOUNT = 0.02
-MESHNODE_MAX_RADIUS = 10
+MESHNODE_MAX_RADIUS = 50
 
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 local input = io.open(modpath.."/meshnode.conf", "r")
