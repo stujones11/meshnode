@@ -6,9 +6,9 @@ MESHNODE_MAX_RADIUS = 50
 local modpath = minetest.get_modpath(minetest.get_current_modname())
 local input = io.open(modpath.."/meshnode.conf", "r")
 if input then
-        dofile(modpath.."/meshnode.conf")
-        input:close()
-        input = nil
+	dofile(modpath.."/meshnode.conf")
+	input:close()
+	input = nil
 end
 
 local allowed_drawtypes = {
@@ -57,13 +57,27 @@ local function create_meshnode(pos, parent)
 			local object = minetest.add_entity(pos, "meshnode:mesh")
 			if object then
 				object:set_properties({textures=textures})
-				local y = 0
-				if node.param2 then
-					y = 90 * node.param2
+				rotation = {x=0, y=0, z=0}
+				if item.paramtype2 == "facedir" and node.param2 then
+					local axis = math.floor(node.param2 / 4)
+					local deg = 90 * (node.param2 % 4)
+					if axis == 0 then
+						rotation = {x=0, y=deg, z=0}
+					elseif axis == 1 then
+						rotation = {x=90, y=0, z=deg}
+					elseif axis == 2 then
+						rotation = {x=-90, y=0, z=-deg}
+					elseif axis == 3 then
+						rotation = {x=deg, y=0, z=90}
+					elseif axis == 4 then
+						rotation = {x=-deg, y=0, z=-90}
+					elseif axis == 5 then
+						rotation = {x=180, y=180 - deg, z=0}
+					end
 				end
 				local offset = vector.subtract(pos, parent:getpos())
 				offset = vector.multiply(offset, {x=10,y=10,z=10})
-				object:set_attach(parent, "", offset, {x=0,y=y,z=0})
+				object:set_attach(parent, "", offset, rotation)
 			end
 		end
 		minetest.remove_node(pos)
@@ -202,15 +216,14 @@ minetest.register_node("meshnode:controller", {
 			local minp = minetest.string_to_pos(fields.minp)
 			local maxp = minetest.string_to_pos(fields.maxp)
 			if is_valid_pos(minp) and is_valid_pos(maxp) then
-				local nodes = {}
 				local node = minetest.get_node(pos)
 				minetest.remove_node(pos)
 				local object = minetest.add_entity(pos, "meshnode:ctrl")
 				if object then
 					for x = minp.x, maxp.x, get_step(minp.x, maxp.x) do
 						for y = minp.y, maxp.y, get_step(minp.y, maxp.y) do
-							for z = minp.z, maxp.z, get_step(minp.z, maxp.z) do						
-								local node_pos = vector.add(pos, {x=x, y=y, z=z})								
+							for z = minp.z, maxp.z, get_step(minp.z, maxp.z) do
+								local node_pos = vector.add(pos, {x=x, y=y, z=z})
 								create_meshnode(node_pos, object)
 							end
 						end
