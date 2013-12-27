@@ -1,28 +1,8 @@
-MESHNODE_MAX_SPEED = 2
-MESHNODE_MAX_LIFT = 1
-MESHNODE_YAW_AMOUNT = 0.02
-MESHNODE_MAX_RADIUS = 50
+dofile(minetest.get_modpath(minetest.get_current_modname()).."/meshnode.lua")
 
-local modpath = minetest.get_modpath(minetest.get_current_modname())
-local input = io.open(modpath.."/meshnode.conf", "r")
-if input then
-	dofile(modpath.."/meshnode.conf")
-	input:close()
-	input = nil
-end
-
-local allowed_drawtypes = {
-	"normal",
-	"allfaces_optional",
-	"glasslike",
-}
-
-local function is_allowed_drawtype(drawtype)
-	for _, v in pairs(allowed_drawtypes) do
-		if v == drawtype then
-			return true
-		end
-	end
+local gropus = {cracky=3, oddly_breakable_by_hand=3}
+if MESHNODE_SHOW_IN_CREATIVE == false then
+	groups.not_in_creative_inventory=1
 end
 
 local function is_valid_pos(pos)
@@ -42,48 +22,6 @@ local function get_step(a, b)
 	return 1
 end
 
-local function create_meshnode(pos, parent)
-	local node = minetest.get_node(pos)
-	local item = minetest.registered_items[node.name]
-	if item then
-		if item.tiles and is_allowed_drawtype(item.drawtype) then
-			local t = item.tiles
-			local textures = {t[1], t[1], t[1], t[1], t[1], t[1]}
-			if #t == 3 then
-				textures = {t[1], t[2], t[3], t[3], t[3], t[3]}
-			elseif #t == 6 then
-				textures = t
-			end
-			local object = minetest.add_entity(pos, "meshnode:mesh")
-			if object then
-				object:set_properties({textures=textures})
-				rotation = {x=0, y=0, z=0}
-				if item.paramtype2 == "facedir" and node.param2 then
-					local axis = math.floor(node.param2 / 4)
-					local deg = 90 * (node.param2 % 4)
-					if axis == 0 then
-						rotation = {x=0, y=deg, z=0}
-					elseif axis == 1 then
-						rotation = {x=90, y=0, z=deg}
-					elseif axis == 2 then
-						rotation = {x=-90, y=0, z=-deg}
-					elseif axis == 3 then
-						rotation = {x=deg, y=0, z=90}
-					elseif axis == 4 then
-						rotation = {x=-deg, y=0, z=-90}
-					elseif axis == 5 then
-						rotation = {x=180, y=180 - deg, z=0}
-					end
-				end
-				local offset = vector.subtract(pos, parent:getpos())
-				offset = vector.multiply(offset, {x=10,y=10,z=10})
-				object:set_attach(parent, "", offset, rotation)
-			end
-		end
-		minetest.remove_node(pos)
-	end
-end
-
 minetest.register_entity("meshnode:ctrl", {
 	physical = true,
 	visual = "cube",
@@ -100,10 +38,10 @@ minetest.register_entity("meshnode:ctrl", {
 	speed = 0,
 	lift = 0,
 	on_activate = function(self, staticdata, dtime_s)
+		self.object:set_armor_groups({cracky=50})
 		if staticdata == "expired" then
 			self.object:remove()
 		end
-		self.object:set_armor_groups({cracky=50})
 	end,
 	on_rightclick = function(self, clicker)
 		if self.player == nil then
@@ -170,7 +108,6 @@ minetest.register_entity("meshnode:ctrl", {
 
 minetest.register_entity("meshnode:mesh", {
 	physical = true,
-	visual = "cube",
 	visual_size = {x=1, y=1},
 	on_activate = function(self, staticdata, dtime_s)
 		if staticdata == "expired" then
@@ -187,7 +124,7 @@ minetest.register_node("meshnode:controller", {
 	paramtype2 = "facedir",
 	tiles = {"meshnode_top.png", "meshnode_side.png", "meshnode_side.png"},
 	is_ground_content = true,
-	groups = {cracky=3, oddly_breakable_by_hand=3},
+	groups = groups,
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("formspec", "size[5,3]"
@@ -218,15 +155,20 @@ minetest.register_node("meshnode:controller", {
 			if is_valid_pos(minp) and is_valid_pos(maxp) then
 				local node = minetest.get_node(pos)
 				minetest.remove_node(pos)
-				local object = minetest.add_entity(pos, "meshnode:ctrl")
-				if object then
+				local positions = {}
+				local parent = minetest.add_entity(pos, "meshnode:ctrl")
+				if parent then
 					for x = minp.x, maxp.x, get_step(minp.x, maxp.x) do
 						for y = minp.y, maxp.y, get_step(minp.y, maxp.y) do
 							for z = minp.z, maxp.z, get_step(minp.z, maxp.z) do
 								local node_pos = vector.add(pos, {x=x, y=y, z=z})
-								create_meshnode(node_pos, object)
+								meshnode:create(node_pos, parent)
+								table.insert(positions, node_pos)
 							end
 						end
+					end
+					for _, pos in pairs(positions) do
+						minetest.remove_node(pos)
 					end
 				end
 			else

@@ -12,3 +12,6 @@ MESHNODE_YAW_AMOUNT = 0.02
 -- Maximum Entity Area
 MESHNODE_MAX_RADIUS = 50
 
+-- Show Controller in Creative Inventory
+MESHNODE_SHOW_IN_CREATIVE = true
+
