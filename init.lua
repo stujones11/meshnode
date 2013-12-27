@@ -1,6 +1,6 @@
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/meshnode.lua")
 
-local gropus = {cracky=3, oddly_breakable_by_hand=3}
+local groups = {cracky=3, oddly_breakable_by_hand=3}
 if MESHNODE_SHOW_IN_CREATIVE == false then
 	groups.not_in_creative_inventory=1
 end
