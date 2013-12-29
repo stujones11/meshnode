@@ -24,16 +24,11 @@ end
 
 minetest.register_entity("meshnode:ctrl", {
 	physical = true,
-	visual = "cube",
+	visual = "mesh",
+	mesh = "wheel.x"
 	visual_size = {x=1, y=1},
-	textures = {
-		"meshnode_top.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-	},
+	collisionbox = {-0.5,0.0,-0.5,0.5,1.0,0.5},
+	textures = {"wheel.png"},
 	player = nil,
 	speed = 0,
 	lift = 0,
@@ -45,7 +40,7 @@ minetest.register_entity("meshnode:ctrl", {
 	end,
 	on_rightclick = function(self, clicker)
 		if self.player == nil then
-			clicker:set_attach(self.object, "", {x=0,y=15,z=0}, {x=0,y=90,z=0})
+			clicker:set_attach(self.object, "", {x=0,y=10,z=0}, {x=0,y=90,z=0})
 			self.player = clicker
 		else
 			self.player:set_detach()
@@ -156,7 +151,9 @@ minetest.register_node("meshnode:controller", {
 				local node = minetest.get_node(pos)
 				minetest.remove_node(pos)
 				local positions = {}
+				pos.y = pos.y-0.5
 				local parent = minetest.add_entity(pos, "meshnode:ctrl")
+				pos.y = pos.y+0.5
 				if parent then
 					for x = minp.x, maxp.x, get_step(minp.x, maxp.x) do
 						for y = minp.y, maxp.y, get_step(minp.y, maxp.y) do
