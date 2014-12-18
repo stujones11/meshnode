@@ -149,7 +149,7 @@ minetest.register_node("meshnode:controller", {
 		end
 	end,
 	on_receive_fields = function(pos, formname, fields, sender)
-		if fields.connect and not fields.quit then
+		if fields.connect then
 			local minp = minetest.string_to_pos(fields.minp)
 			local maxp = minetest.string_to_pos(fields.maxp)
 			if is_valid_pos(minp) and is_valid_pos(maxp) then
