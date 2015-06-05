@@ -149,33 +149,23 @@ minetest.register_node("meshnode:controller", {
 		end
 	end,
 	on_receive_fields = function(pos, formname, fields, sender)
-		if fields.connect then
-			local minp = minetest.string_to_pos(fields.minp)
-			local maxp = minetest.string_to_pos(fields.maxp)
-			if is_valid_pos(minp) and is_valid_pos(maxp) then
-				local node = minetest.get_node(pos)
-				minetest.remove_node(pos)
-				local positions = {}
-				local parent = minetest.add_entity(pos, "meshnode:ctrl")
-				if parent then
-					for x = minp.x, maxp.x, get_step(minp.x, maxp.x) do
-						for y = minp.y, maxp.y, get_step(minp.y, maxp.y) do
-							for z = minp.z, maxp.z, get_step(minp.z, maxp.z) do
-								local node_pos = vector.add(pos, {x=x, y=y, z=z})
-								meshnode:create(node_pos, parent)
-								table.insert(positions, node_pos)
-							end
-						end
-					end
-					for _, pos in pairs(positions) do
-						minetest.remove_node(pos)
-					end
-				end
-			else
-				local name = sender:get_player_name()
-				minetest.chat_send_player(name, "Invalid Position!")
-			end
+		if not fields.connect then
+			return
 		end
+		local minp = minetest.string_to_pos(fields.minp)
+		local maxp = minetest.string_to_pos(fields.maxp)
+		if not is_valid_pos(minp)
+		or not is_valid_pos(maxp) then
+			local name = sender:get_player_name()
+			minetest.chat_send_player(name, "Invalid Position!")
+			return
+		end
+		local parent = minetest.add_entity(pos, "meshnode:ctrl")
+		if not parent then
+			return
+		end
+		minetest.remove_node(pos)
+		meshnode.create_objects(pos, minp, maxp, parent)
 	end,
 })
 
