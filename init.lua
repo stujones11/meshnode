@@ -119,6 +119,68 @@ minetest.register_entity("meshnode:mesh", {
 	end,
 })
 
+local possible_drawtypes = {"fencelike", "plantlike", "normal", "allfaces_optional", "glasslike", "nodebox"}
+local function node_allowed(pos)
+	local nname = minetest.get_node(pos).name
+	if nname == "air" then
+		return
+	end
+	local dt = minetest.registered_nodes[nname]
+	if not dt then
+		return
+	end
+	dt = dt.drawtype
+	for _,i in pairs(possible_drawtypes) do
+		if i == dt then
+			return true
+		end
+	end
+end
+
+-- automatically detects minp and maxp if possible
+local function get_minmax(pos, max)
+	local tab = {pos}
+	local num = 2
+	local tab_avoid = {[pos.x.." "..pos.y.." "..pos.z] = true}
+	local minp = {x=0, y=0, z=0}
+	local maxp = {x=0, y=0, z=0}
+	while tab[1] do
+		for n,p in pairs(tab) do
+			--[[
+			for i = -1,1 do
+				for j = -1,1 do
+					for k = -1,1 do
+						local p2 = {x=p.x+i, y=p.y+j, z=p.z+k}]]
+			for i = -1,1,2 do
+				for _,p2 in pairs({
+					{x=p.x+i, y=p.y, z=p.z},
+					{x=p.x, y=p.y+i, z=p.z},
+					{x=p.x, y=p.y, z=p.z+i},
+				}) do
+					local pstr = p2.x.." "..p2.y.." "..p2.z
+					if not tab_avoid[pstr]
+					and node_allowed(p2) then
+						tab_avoid[pstr] = true
+						local p = vector.subtract(p2, pos)
+						for _,c in pairs({"x","y","z"}) do
+							minp[c] = math.min(minp[c], p[c])
+							maxp[c] = math.max(maxp[c], p[c])
+						end
+						num = num+1
+						table.insert(tab, p2)
+						if max
+						and num > max then
+							return false
+						end
+					end
+				end
+			end
+			tab[n] = nil
+		end
+	end
+	return minp, maxp
+end
+
 minetest.register_node("meshnode:controller", {
 	description = "Meshnode Controller",
 	paramtype2 = "facedir",
@@ -133,6 +195,11 @@ minetest.register_node("meshnode:controller", {
 			.."button_exit[1.0,2;3,0.5;connect;Generate Entity]"
 		)
 		meta:set_string("infotext", "Meshnode Controller")
+		local minp, maxp = get_minmax(pos, 9000)
+		if minp then
+			meta:set_string("minp", minp.x..","..minp.y..","..minp.z)
+			meta:set_string("maxp", maxp.x..","..maxp.y..","..maxp.z)
+		end
 	end,
 	after_place_node = function(pos, placer)
 		if worldedit then
@@ -149,33 +216,23 @@ minetest.register_node("meshnode:controller", {
 		end
 	end,
 	on_receive_fields = function(pos, formname, fields, sender)
-		if fields.connect then
-			local minp = minetest.string_to_pos(fields.minp)
-			local maxp = minetest.string_to_pos(fields.maxp)
-			if is_valid_pos(minp) and is_valid_pos(maxp) then
-				local node = minetest.get_node(pos)
-				minetest.remove_node(pos)
-				local positions = {}
-				local parent = minetest.add_entity(pos, "meshnode:ctrl")
-				if parent then
-					for x = minp.x, maxp.x, get_step(minp.x, maxp.x) do
-						for y = minp.y, maxp.y, get_step(minp.y, maxp.y) do
-							for z = minp.z, maxp.z, get_step(minp.z, maxp.z) do
-								local node_pos = vector.add(pos, {x=x, y=y, z=z})
-								meshnode:create(node_pos, parent)
-								table.insert(positions, node_pos)
-							end
-						end
-					end
-					for _, pos in pairs(positions) do
-						minetest.remove_node(pos)
-					end
-				end
-			else
-				local name = sender:get_player_name()
-				minetest.chat_send_player(name, "Invalid Position!")
-			end
+		if not fields.connect then
+			return
 		end
+		local minp = minetest.string_to_pos(fields.minp)
+		local maxp = minetest.string_to_pos(fields.maxp)
+		if not is_valid_pos(minp)
+		or not is_valid_pos(maxp) then
+			local name = sender:get_player_name()
+			minetest.chat_send_player(name, "Invalid Position!")
+			return
+		end
+		local parent = minetest.add_entity(pos, "meshnode:ctrl")
+		if not parent then
+			return
+		end
+		minetest.remove_node(pos)
+		meshnode.create_objects(pos, minp, maxp, parent)
 	end,
 })
 
