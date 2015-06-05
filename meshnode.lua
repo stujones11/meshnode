@@ -40,8 +40,6 @@ end
 local function getobject(pos, parentpos)
 	local node = minetest.get_node(pos)
 	local item = minetest.registered_items[node.name]
-	local object = nil
-	local rotation = {x=0, y=0, z=0}
 	if not item then
 		return
 	end
@@ -102,6 +100,7 @@ local function getobject(pos, parentpos)
 	else
 		return
 	end
+	local rotation = {x=0, y=0, z=0}
 	local facedir = node.param2
 	if item.paramtype2 == "facedir"
 	and facedir then
@@ -148,10 +147,32 @@ function meshnode.create_objects(pos, minp, maxp, parent)
 		local x,y,z = unpack(string.split(pstr, " "))
 		local allowed = true
 		if data.usual then
-			-- don't spawn unnecessary objects
 			local nbs = get_neighbours(todo_objs, x,y,z)
+			-- don't spawn unnecessary objects
 			if #nbs == 6 then
 				allowed = false
+			--[[elseif #nbs > 1 then -- this somehow doesnt work
+				local textures = data.properties.textures
+				for _,pstr in pairs(nbs) do
+					local n
+					local nx,ny,nz = unpack(string.split(pstr, " "))
+					if ny > y then
+						n = 1
+					elseif ny < y then
+						n = 2
+					elseif nx > x then
+						n = 3
+					elseif nx < x then
+						n = 4
+					elseif nz > z then
+						n = 5
+					elseif nz < z then
+						n = 6
+					end
+					if n then
+						textures[n] = "meshnode_trans.png"
+					end
+				end]]
 			end
 		end
 		if allowed then
