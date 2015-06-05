@@ -120,7 +120,8 @@ local function get_neighbours(objs, x,y,z)
 			x.." "..y+i.." "..z,
 			x.." "..y.." "..z+i
 		}) do
-			if objs[pstr] then
+			if objs[pstr]
+			and objs[pstr].usual then
 				table.insert(ps, pstr)
 			end
 		end
