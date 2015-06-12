@@ -40,18 +40,6 @@ Controls
 [Sneak]	Down
 [RMB]	Attach/Detach
 
-Limitations
-===========
-
-Models will disappear or become detached from the controller if they become
-unloaded. This can cause the server to warn against excessive objects and
-destroy them accordingly.
-
-I have tried a number of ways the get the models to persist after a server
-restart but so far all of my efforts have been thwarted by minetest's buggy
-object management system.  I also wanted to be able to attach 'passengers'
-to the entities, however, this has not been possible for the same reason.
-
 Know Issues
 ===========
 

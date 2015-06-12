@@ -1,8 +1,9 @@
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/meshnode.lua")
 
+local timer = 0
 local groups = {cracky=3, oddly_breakable_by_hand=3}
 if MESHNODE_SHOW_IN_CREATIVE == false then
-	groups.not_in_creative_inventory=1
+	groups.not_in_creative_inventory = 1
 end
 
 local function is_valid_pos(pos)
@@ -26,22 +27,16 @@ minetest.register_entity("meshnode:ctrl", {
 	physical = true,
 	visual = "cube",
 	visual_size = {x=1, y=1},
-	textures = {
-		"meshnode_top.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-		"meshnode_side.png",
-	},
 	player = nil,
 	speed = 0,
 	lift = 0,
+	meshnode_id = nil,
 	on_activate = function(self, staticdata, dtime_s)
-		self.object:set_armor_groups({cracky=50})
 		if staticdata == "expired" then
 			self.object:remove()
+			return
 		end
+		self.object:set_armor_groups({fleshy=MESHNODE_BREAKABLILITY})
 	end,
 	on_rightclick = function(self, clicker)
 		if self.player == nil then
@@ -50,6 +45,35 @@ minetest.register_entity("meshnode:ctrl", {
 		else
 			self.player:set_detach()
 			self.player = nil
+		end
+	end,
+	on_punch = function(self, puncher, time_from_last_punch, tool_capabilities)
+		if not puncher:is_player() or not self.meshnode_id then
+			return
+		end
+		local inv = puncher:get_inventory()
+		if not inv then
+			return
+		end
+		local hp = self.object:get_hp() or 0
+		if hp > 0 then
+			return
+		end
+		meshnode.nodes[self.meshnode_id] = nil
+		for id, ref in pairs(meshnode.nodes) do
+			if ref.parent_id == self.meshnode_id then
+				local stack = {name=ref.node.name}
+				if inv:room_for_item("main", stack) then
+					inv:add_item("main", stack)
+				else
+					minetest.add_item(pos, stack)
+				end
+				local object = meshnode.nodes[id].object
+				if object then
+					object:remove()
+				end
+				meshnode.nodes[id] = nil
+			end
 		end
 	end,
 	on_step = function(self, dtime)
@@ -109,6 +133,7 @@ minetest.register_entity("meshnode:ctrl", {
 minetest.register_entity("meshnode:mesh", {
 	physical = true,
 	visual_size = {x=1, y=1},
+	meshnode_id = nil,
 	on_activate = function(self, staticdata, dtime_s)
 		if staticdata == "expired" then
 			self.object:remove()
@@ -154,10 +179,10 @@ minetest.register_node("meshnode:controller", {
 			local maxp = minetest.string_to_pos(fields.maxp)
 			if is_valid_pos(minp) and is_valid_pos(maxp) then
 				local node = minetest.get_node(pos)
-				minetest.remove_node(pos)
 				local positions = {}
-				local parent = minetest.add_entity(pos, "meshnode:ctrl")
+				local parent = meshnode:create(pos, nil)
 				if parent then
+					minetest.remove_node(pos)
 					for x = minp.x, maxp.x, get_step(minp.x, maxp.x) do
 						for y = minp.y, maxp.y, get_step(minp.y, maxp.y) do
 							for z = minp.z, maxp.z, get_step(minp.z, maxp.z) do
@@ -167,6 +192,7 @@ minetest.register_node("meshnode:controller", {
 							end
 						end
 					end
+					meshnode:save()
 					for _, pos in pairs(positions) do
 						minetest.remove_node(pos)
 					end
@@ -178,4 +204,21 @@ minetest.register_node("meshnode:controller", {
 		end
 	end,
 })
+
+minetest.register_globalstep(function(dtime)
+	for _, node in pairs(meshnode.nodes) do
+		node.timer = node.timer + dtime
+		if node.timer > MESHNODE_UPDATE_TIME then
+			node:update()
+			node.timer = 0
+		end
+	end
+	if MESHNODE_SAVE_OBJECTS and MESHNODE_AUTOSAVE then
+		timer = timer + dtime
+		if timer > MESHNODE_AUTOSAVE_TIME then
+			meshnode:save()
+			timer = 0
+		end
+	end
+end)
 

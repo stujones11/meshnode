@@ -1,4 +1,4 @@
--- Meshnode configuration (defaults)
+-- Meshnode configuration (single player defaults)
 
 -- Maximum Entity Speed
 MESHNODE_MAX_SPEED = 2
@@ -12,6 +12,30 @@ MESHNODE_YAW_AMOUNT = 0.02
 -- Maximum Entity Area
 MESHNODE_MAX_RADIUS = 50
 
+-- Save objects to file, structure will reload after restart
+MESHNODE_SAVE_OBJECTS = true
+
 -- Show Controller in Creative Inventory
 MESHNODE_SHOW_IN_CREATIVE = true
+
+-- Allow the mod to set max_objects_per_block
+MESHNODE_AUTOCONF = true
+
+-- Periodically save the current state
+MESHNODE_AUTOSAVE = true, depends MESHNODE_SAVE_OBJECTS
+
+-- How often to save state, depends MESHNODE_AUTOSAVE
+MESHNODE_AUTOSAVE_TIME = 4
+
+-- How often meshnode objects are updated
+MESHNODE_UPDATE_TIME = 1
+
+-- Armor group fleshy level
+MESHNODE_BREAKABLILITY = 100
+
+-- Reload when player in range
+MESHNODE_RELOAD_DISTANCE = 32
+
+-- Maximum allowed objects
+MESHNODE_MAX_OBJECTS = 4096
 
