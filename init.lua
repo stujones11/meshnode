@@ -110,7 +110,7 @@ register_scaffold("meshnode:scaffold_fence", {fence=1})
 register_scaffold("meshnode:scaffold_wall", {wall=1})
 register_scaffold("meshnode:scaffold_pane", {pane=1})
 
-if meshnode.config.enable_crafting then
+if meshnode.config.enable_crafting == true then
 	minetest.register_craft({
 		output = "meshnode:controller",
 		recipe = {
