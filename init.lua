@@ -6,6 +6,7 @@ end
 
 dofile(minetest.get_modpath(minetest.get_current_modname()).."/api.lua")
 
+local ctrl_groups = {choppy=2, oddly_breakable_by_hand=2}
 local has_worldedit = minetest.global_exists("worldedit")
 local is_singleplayer = minetest.is_singleplayer()
 local control_textures = {
@@ -42,6 +43,10 @@ end
 
 if meshnode.config.autoconf == true then
 	minetest.setting_set("max_objects_per_block", "4096")
+end
+
+if meshnode.config.show_in_creative == false then
+	ctrl_groups.not_in_creative_inventory = 1
 end
 
 local function has_privilege(name)
@@ -308,7 +313,7 @@ minetest.register_node("meshnode:controller", {
 	paramtype = "light",
 	paramtype2 = "facedir",
 	tiles = control_textures,
-	groups = {choppy=2, oddly_breakable_by_hand=2},
+	groups = ctrl_groups,
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
@@ -366,6 +371,7 @@ minetest.register_tool("meshnode:glue", {
 	description = S("Meshnode Glue"),
 	inventory_image = "meshnode_glue.png",
 	liquids_pointable = true,
+	groups = {not_in_creative_inventory=1},
 	on_use = function(itemstack, user, pointed_thing)
 		local meta = itemstack:get_metadata()
 		local parent = meshnode.get_luaentity(meta)
