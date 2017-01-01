@@ -126,6 +126,8 @@ if meshnode.config.enable_crafting == true then
 	})
 end
 
+minetest.register_privilege("meshnode", "Player can use meshnode controller.")
+
 minetest.register_entity("meshnode:mesh", {
 	physical = true,
 	visual = "wielditem",
