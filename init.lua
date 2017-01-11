@@ -450,8 +450,18 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				local p1 = worldedit.pos1[name]
 				local p2 = worldedit.pos2[name]
 				if p1 and p2 then
-					local area = VoxelArea:new{MinEdge=p1, MaxEdge=p2}
-					for i in area:iterp(p1, p2) do
+					local minp = {
+						x = math.min(p1.x, p2.x),
+						y = math.min(p1.y, p2.y),
+						z = math.min(p1.z, p2.z),
+					}
+					local maxp = {
+						x = math.max(p1.x, p2.x),
+						y = math.max(p1.y, p2.y),
+						z = math.max(p1.z, p2.z),
+					}
+					local area = VoxelArea:new{MinEdge=minp, MaxEdge=maxp}
+					for i in area:iterp(minp, maxp) do
 						local p = area:position(i)
 						meshnode.create(p, entity)
 					end
