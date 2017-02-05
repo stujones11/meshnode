@@ -481,6 +481,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			entity.animation = "stand"
 			entity.object:set_animation({x=20, y=100}, 15)
 			default.player_attached[name] = false
+			local p = player:getpos()
+			minetest.after(0.1, function()
+				player:setpos({x=p.x, y=p.y + 1, z=p.z})
+			end)
 		elseif fields.animation_sit then
 			default.player_set_animation(player, "sit", 30)
 			entity.animation = "sit"
