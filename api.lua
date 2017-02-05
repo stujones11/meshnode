@@ -142,7 +142,6 @@ meshnode.rotate_offset = function(yaw, offset)
 	local sin = math.sin(yaw)
 	local x = offset.x * cos - offset.z * sin
 	local z = offset.x * sin + offset.z * cos
-	local ret = vector.round({x=x, y=offset.y, z=z})
 	return vector.round({x=x, y=offset.y, z=z})
 end
 
