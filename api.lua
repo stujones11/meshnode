@@ -315,6 +315,9 @@ meshnode.restore_all = function(parent, name)
 	local nodedata = {}
 	for _, ref in pairs(parent.nodes) do
 		local pos = meshnode.get_map_pos(ref, parent)
+		if not minetest.get_node_or_nil(pos) then
+			return
+		end
 		if name and minetest.is_protected(pos, name) then
 			return
 		end

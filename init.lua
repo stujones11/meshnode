@@ -517,7 +517,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 				entity.mesh_id = minetest.pos_to_string(pos)
 				entity:set_activated(false)
 			else
-				minetest.chat_send_player(name, S("Protected area").."!")
+				local msg = S("Protected or unloaded area")
+				minetest.chat_send_player(name, msg.."!")
 			end
 		end
 	end
