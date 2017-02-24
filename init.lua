@@ -21,6 +21,7 @@ if is_singleplayer then
 	meshnode.config.max_radius = 16
 	meshnode.config.show_in_creative = true
 	meshnode.config.enable_crafting = true
+	meshnode.config.fake_shading = true
 	meshnode.config.autoconf = true
 else
 	meshnode.blacklist["default:chest_locked"] = true

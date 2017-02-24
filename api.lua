@@ -7,6 +7,7 @@ meshnode.config = {
 	max_radius = 8,
 	show_in_creative = false,
 	enable_crafting = false,
+	fake_shading = false,
 	autoconf = false,
 }
 
@@ -34,7 +35,42 @@ local function connects_to_group(pos, groups)
 	end
 end
 
-local function get_face_textures(facecons, texture)
+local function get_tile_textures(t, facedir)
+	local textures = {t[1], t[1], t[1], t[1], t[1], t[1]}
+	if #t == 3 then
+		textures = {t[1], t[2], t[3], t[3], t[3], t[3]}
+	elseif #t == 6 then
+		textures = table.copy(t)
+	end
+	if facedir and meshnode.config.fake_shading == true then
+		local tile_opposite = {2, 1, 4, 3, 6, 5}
+		local tile_rotation = {
+			{1, 6}, {1, 3}, {1, 5}, {1, 4},
+			{6, 2}, {3, 2}, {5, 2}, {4, 2},
+			{5, 1}, {4, 1}, {6, 1}, {3, 1},
+			{4, 6}, {6, 3}, {3, 5}, {5, 4},
+			{3, 6}, {5, 3}, {4, 5}, {6, 4},
+			{2, 6}, {2, 3}, {2, 5}, {2, 4},
+		}
+		local modifiers = {}
+		local rot = tile_rotation[facedir + 1]
+		local top = rot[1]
+		local front = rot[2]
+		local bottom = tile_opposite[top]
+		local back = tile_opposite[front]
+		modifiers[top] = "^[colorize:#000000:16"
+		modifiers[bottom] = "^[colorize:#000000:128"
+		modifiers[front] = "^[colorize:#000000:64"
+		modifiers[back] = "^[colorize:#000000:64"
+		for i = 1, 6 do
+			local modifier = modifiers[i] or "^[colorize:#000000:32"
+			textures[i] = textures[i]..modifier
+		end
+	end
+	return textures
+end
+
+local function get_facecon_textures(facecons, texture)
 	local textures = {
 		"meshnode_trans.png",
 		"meshnode_trans.png",
@@ -151,27 +187,40 @@ meshnode.add_entity = function(ref, parent)
 	if object then
 		local properties = {textures={ref.node.name}}
 		local def = minetest.registered_items[ref.node.name] or {}
-		if ref.meshtype == "plant" then
+		if ref.meshtype == "stair" or
+				ref.meshtype == "cube" or
+				ref.meshtype == "slab" then
+			local param2 = ref.node.param2 or 0
+			properties.visual = "mesh"
+			properties.visual_size = {x=1, y=1}
+			properties.mesh = "meshnode_"..ref.meshtype..".obj"
+			properties.textures = get_tile_textures(def.tiles, param2)
+		elseif ref.meshtype == "mesh" then
+			properties.visual = "mesh"
+			properties.visual_size = {x=10, y=10}
+			properties.mesh = def.mesh
+			properties.textures = get_tile_textures(def.tiles)
+		elseif ref.meshtype == "plant" then
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_plant.obj"
 			properties.textures = {def.tiles[1]}
 		elseif ref.meshtype == "fence" then
-			local textures = get_face_textures(ref.facecons, def.tiles[1])
+			local textures = get_facecon_textures(ref.facecons, def.tiles[1])
 			table.insert(textures, 1, def.tiles[1])
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_fence.obj"
 			properties.textures = textures
 		elseif ref.meshtype == "wall" then
-			local textures = get_face_textures(ref.facecons, def.tiles[1])
+			local textures = get_facecon_textures(ref.facecons, def.tiles[1])
 			table.insert(textures, 1, def.tiles[1])
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_wall.obj"
 			properties.textures = textures
 		elseif ref.meshtype == "pane" then
-			local textures = get_face_textures(ref.facecons, def.tiles[3])
+			local textures = get_facecon_textures(ref.facecons, def.tiles[3])
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_pane.obj"
@@ -189,8 +238,7 @@ meshnode.add_entity = function(ref, parent)
 			end
 			local yaw = parent.object:getyaw()
 			local offset = vector.multiply(ref.offset, 10)
-			local rotation = vector.new(ref.rotation)
-			object:set_attach(parent.object, "", offset, rotation)
+			object:set_attach(parent.object, "", offset, ref.rotation)
 		end
 	end
 	return object
@@ -217,6 +265,16 @@ meshnode.create = function(pos, parent)
 			def.paramtype2 == "wallmounted" or
 			def.paramtype2 == "flowingliquid" then
 		return
+	elseif def.drawtype == nil or def.drawtype == "normal" then
+		meshtype = "cube"
+	elseif def.drawtype == "mesh" then
+		if string.find(node.name, ":stair") then
+			meshtype = "stair"
+		else
+			meshtype = "mesh"
+		end
+	elseif string.find(node.name, ":slab") then
+		meshtype = "slab"
 	elseif def.drawtype == "plantlike" then
 		meshtype = "plant"
 	elseif minetest.get_item_group(node.name, "fence") > 0 then

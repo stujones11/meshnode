@@ -116,6 +116,7 @@ meshnode_yaw_amount = 0.017
 meshnode_max_radius = 8
 meshnode_show_in_creative = false
 meshnode_enable_crafting = false
+meshnode_fake_shading = false
 meshnode_autoconf = false
 ```
 Note that speed, lift, yaw and radius may still be altered by other mods after
