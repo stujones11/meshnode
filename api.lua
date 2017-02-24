@@ -44,7 +44,7 @@ local function get_tile_textures(t, facedir)
 	end
 	if facedir and meshnode.config.fake_shading == true then
 		local tile_opposite = {2, 1, 4, 3, 6, 5}
-		local tile_rotation = {
+		local tile_rotation = {[0] =
 			{1, 6}, {1, 3}, {1, 5}, {1, 4},
 			{6, 2}, {3, 2}, {5, 2}, {4, 2},
 			{5, 1}, {4, 1}, {6, 1}, {3, 1},
@@ -53,9 +53,8 @@ local function get_tile_textures(t, facedir)
 			{2, 6}, {2, 3}, {2, 5}, {2, 4},
 		}
 		local modifiers = {}
-		local rot = tile_rotation[facedir + 1]
-		local top = rot[1]
-		local front = rot[2]
+		local top = tile_rotation[facedir][1]
+		local front = tile_rotation[facedir][2]
 		local bottom = tile_opposite[top]
 		local back = tile_opposite[front]
 		modifiers[top] = "^[colorize:#000000:16"
@@ -268,12 +267,12 @@ meshnode.create = function(pos, parent)
 	elseif def.drawtype == nil or def.drawtype == "normal" then
 		meshtype = "cube"
 	elseif def.drawtype == "mesh" then
-		if string.find(node.name, ":stair") then
+		if string.find(node.name, "^stairs:stair_") then
 			meshtype = "stair"
 		else
 			meshtype = "mesh"
 		end
-	elseif string.find(node.name, ":slab") then
+	elseif string.find(node.name, "^stairs:slab_") then
 		meshtype = "slab"
 	elseif def.drawtype == "plantlike" then
 		meshtype = "plant"
