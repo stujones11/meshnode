@@ -35,7 +35,13 @@ local function connects_to_group(pos, groups)
 	end
 end
 
-local function get_tile_textures(t, facedir)
+local function get_tile_textures(tiles, facedir)
+	local t = table.copy(tiles)
+	for i, v in pairs(t) do
+		if type(v) == "table" then
+			t[i] = v.name or "blank.png"
+		end
+	end
 	local textures = {t[1], t[1], t[1], t[1], t[1], t[1]}
 	if #t == 3 then
 		textures = {t[1], t[2], t[3], t[3], t[3], t[3]}
