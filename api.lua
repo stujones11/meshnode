@@ -35,18 +35,27 @@ local function connects_to_group(pos, groups)
 	end
 end
 
-local function get_tile_textures(tiles, facedir)
-	local t = table.copy(tiles)
-	for i, v in pairs(t) do
+local function get_tile_textures(tiles)
+	local textures = table.copy(tiles)
+	for i, v in pairs(textures) do
 		if type(v) == "table" then
-			t[i] = v.name or "blank.png"
+			textures[i] = v.name or "blank.png"
+			if v.name and v.animation then
+				local w = v.animation.aspect_w or 16
+				local h = v.animation.aspect_h or w
+				textures[i] = "[combine:"..w.."x"..h..":0,0="..v.name
+			end
 		end
 	end
-	local textures = {t[1], t[1], t[1], t[1], t[1], t[1]}
+	return textures
+end
+
+local function get_tile_shading(t, facedir)
+	local tiles = {t[1], t[1], t[1], t[1], t[1], t[1]}
 	if #t == 3 then
-		textures = {t[1], t[2], t[3], t[3], t[3], t[3]}
+		tiles = {t[1], t[2], t[3], t[3], t[3], t[3]}
 	elseif #t == 6 then
-		textures = table.copy(t)
+		tiles = table.copy(t)
 	end
 	if facedir and meshnode.config.fake_shading == true then
 		local tile_opposite = {2, 1, 4, 3, 6, 5}
@@ -69,10 +78,10 @@ local function get_tile_textures(tiles, facedir)
 		modifiers[back] = "^[colorize:#000000:64"
 		for i = 1, 6 do
 			local modifier = modifiers[i] or "^[colorize:#000000:32"
-			textures[i] = textures[i]..modifier
+			tiles[i] = tiles[i]..modifier
 		end
 	end
-	return textures
+	return tiles
 end
 
 local function get_facecon_textures(facecons, texture)
@@ -192,6 +201,7 @@ meshnode.add_entity = function(ref, parent)
 	if object then
 		local properties = {textures={ref.node.name}}
 		local def = minetest.registered_items[ref.node.name] or {}
+		local tiles = get_tile_textures(def.tiles)
 		if ref.meshtype == "stair" or
 				ref.meshtype == "cube" or
 				ref.meshtype == "slab" then
@@ -199,33 +209,33 @@ meshnode.add_entity = function(ref, parent)
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_"..ref.meshtype..".obj"
-			properties.textures = get_tile_textures(def.tiles, param2)
+			properties.textures = get_tile_shading(tiles, param2)
 		elseif ref.meshtype == "mesh" then
 			properties.visual = "mesh"
 			properties.visual_size = {x=10, y=10}
 			properties.mesh = def.mesh
-			properties.textures = get_tile_textures(def.tiles)
+			properties.textures = tiles
 		elseif ref.meshtype == "plant" then
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_plant.obj"
-			properties.textures = {def.tiles[1]}
+			properties.textures = {tiles[1]}
 		elseif ref.meshtype == "fence" then
-			local textures = get_facecon_textures(ref.facecons, def.tiles[1])
-			table.insert(textures, 1, def.tiles[1])
+			local textures = get_facecon_textures(ref.facecons, tiles[1])
+			table.insert(textures, 1, tiles[1])
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_fence.obj"
 			properties.textures = textures
 		elseif ref.meshtype == "wall" then
-			local textures = get_facecon_textures(ref.facecons, def.tiles[1])
-			table.insert(textures, 1, def.tiles[1])
+			local textures = get_facecon_textures(ref.facecons, tiles[1])
+			table.insert(textures, 1, tiles[1])
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_wall.obj"
 			properties.textures = textures
 		elseif ref.meshtype == "pane" then
-			local textures = get_facecon_textures(ref.facecons, def.tiles[3])
+			local textures = get_facecon_textures(ref.facecons, tiles[3])
 			properties.visual = "mesh"
 			properties.visual_size = {x=1, y=1}
 			properties.mesh = "meshnode_pane.obj"
@@ -270,7 +280,9 @@ meshnode.create = function(pos, parent)
 			def.paramtype2 == "wallmounted" or
 			def.paramtype2 == "flowingliquid" then
 		return
-	elseif def.drawtype == nil or def.drawtype == "normal" then
+	elseif def.drawtype == nil or
+			def.drawtype == "normal" or
+			def.drawtype == "liquid" then
 		meshtype = "cube"
 	elseif def.drawtype == "mesh" then
 		if string.find(node.name, "^stairs:stair_") then
