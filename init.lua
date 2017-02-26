@@ -102,7 +102,8 @@ local function register_scaffold(name, groups)
 	groups.cracky = 1
 	minetest.register_node(name, {
 		paramtype = "light",
-		drawtype = "glasslike",
+		drawtype = "mesh",
+		mesh = "meshnode_highlight.obj",
 		is_ground_content = false,
 		sunlight_propagates = true,
 		use_texture_alpha = true,
