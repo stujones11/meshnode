@@ -108,6 +108,29 @@ local function restore_facedir(node, delta, yaw)
 	end
 end
 
+local function serialize(data)
+	if data.inventory then
+		for i, v in pairs(data.inventory) do
+			if type(v) == "string" then
+				data.inventory[i] = minetest.compress(v, "deflate", 9)
+			end
+		end
+	end
+	return minetest.serialize(data)
+end
+
+local function deserialize(str)
+	local data = minetest.deserialize(str) or {}
+	if data.inventory then
+		for i, v in pairs(data.inventory) do
+			if type(v) == "string" then
+				data.inventory[i] = minetest.decompress(v, "deflate", 9)
+			end
+		end
+	end
+	return data
+end
+
 meshnode.new_id = function()
 	meshnode_id = meshnode_id + 1
 	return tostring(meshnode_id)
@@ -341,7 +364,7 @@ meshnode.create = function(pos, parent)
 		end
 	end
 	if next(meta_tab) then
-		meta_str = minetest.serialize(meta_tab)
+		meta_str = serialize(meta_tab)
 	end
 	local ref = {
 		id = meshnode.new_id(),
@@ -374,7 +397,7 @@ meshnode.restore = function(ref, parent)
 	end
 	if ref.meta then
 		local meta = minetest.get_meta(pos)
-		local meta_tab = minetest.deserialize(ref.meta) or {}
+		local meta_tab = deserialize(ref.meta) or {}
 		meta:from_table(meta_tab)
 	end
 end
@@ -423,7 +446,7 @@ meshnode.restore_all = function(parent, name)
 		end
 		if data.ref.meta then
 			local meta = minetest.get_meta(data.pos)
-			local meta_tab = minetest.deserialize(data.ref.meta) or {}
+			local meta_tab = deserialize(data.ref.meta) or {}
 			meta:from_table(meta_tab)
 		end
 		table.insert(positions, data.pos)
