@@ -108,27 +108,37 @@ local function restore_facedir(node, delta, yaw)
 	end
 end
 
-local function serialize(data)
-	if data.inventory then
-		for i, v in pairs(data.inventory) do
-			if type(v) == "string" then
-				data.inventory[i] = minetest.compress(v, "deflate", 9)
+local function inventory_to_table(data)
+	for _, list in pairs(data) do
+		for i, stack in ipairs(list) do
+			local t = ItemStack(stack):to_table() or {}
+			for k, v in pairs(t) do
+				if type(v) == "string" then
+					local str = minetest.compress(v, "deflate", 9)
+					if str:len() > 0xffff then
+						minetest.log("error",
+							"String too long for serialization!")
+						str = ""
+					end
+					t[k] = str
+				end
 			end
+			list[i] = t
 		end
 	end
-	return minetest.serialize(data)
 end
 
-local function deserialize(str)
-	local data = minetest.deserialize(str) or {}
-	if data.inventory then
-		for i, v in pairs(data.inventory) do
-			if type(v) == "string" then
-				data.inventory[i] = minetest.decompress(v, "deflate", 9)
+local function inventory_from_table(data)
+	for _, list in pairs(data) do
+		for i, stack in ipairs(list) do
+			for k, v in pairs(stack) do
+				if type(v) == "string" and v ~= "" then
+					stack[k] = minetest.decompress(v, "deflate", 9)
+				end
 			end
+			list[i] = ItemStack(stack)
 		end
 	end
-	return data
 end
 
 meshnode.new_id = function()
@@ -357,14 +367,10 @@ meshnode.create = function(pos, parent)
 	local meta_str = nil
 	local meta_tab = meta:to_table() or {}
 	if meta_tab.inventory then
-		for _, list in pairs(meta_tab.inventory) do
-			for i, stack in ipairs(list) do
-				list[i] = ItemStack(stack):to_string()
-			end
-		end
+		inventory_to_table(meta_tab.inventory)
 	end
 	if next(meta_tab) then
-		meta_str = serialize(meta_tab)
+		meta_str = minetest.serialize(meta_tab)
 	end
 	local ref = {
 		id = meshnode.new_id(),
@@ -397,7 +403,10 @@ meshnode.restore = function(ref, parent)
 	end
 	if ref.meta then
 		local meta = minetest.get_meta(pos)
-		local meta_tab = deserialize(ref.meta) or {}
+		local meta_tab = minetest.deserialize(ref.meta) or {}
+		if meta_tab.inventory then
+			inventory_from_table(meta_tab.inventory)
+		end
 		meta:from_table(meta_tab)
 	end
 end
@@ -446,7 +455,10 @@ meshnode.restore_all = function(parent, name)
 		end
 		if data.ref.meta then
 			local meta = minetest.get_meta(data.pos)
-			local meta_tab = deserialize(data.ref.meta) or {}
+			local meta_tab = minetest.deserialize(data.ref.meta) or {}
+			if meta_tab.inventory then
+				inventory_from_table(meta_tab.inventory)
+			end
 			meta:from_table(meta_tab)
 		end
 		table.insert(positions, data.pos)
