@@ -108,19 +108,27 @@ local function restore_facedir(node, delta, yaw)
 	end
 end
 
+local function compress(str)
+	str = minetest.compress(str, "deflate", 9)
+	if str:len() > 0xffff then
+		minetest.log("error",
+			"String too long for serialization!")
+		str = ""
+	end
+	return str
+end
+
+local function decompress(str)
+	return minetest.decompress(str, "deflate", 9)
+end
+
 local function inventory_to_table(data)
 	for _, list in pairs(data) do
 		for i, stack in ipairs(list) do
 			local t = ItemStack(stack):to_table() or {}
 			for k, v in pairs(t) do
-				if type(v) == "string" then
-					local str = minetest.compress(v, "deflate", 9)
-					if str:len() > 0xffff then
-						minetest.log("error",
-							"String too long for serialization!")
-						str = ""
-					end
-					t[k] = str
+				if type(v) == "string" and v ~= "" then
+					t[k] = compress(v)
 				end
 			end
 			list[i] = t
@@ -133,7 +141,7 @@ local function inventory_from_table(data)
 		for i, stack in ipairs(list) do
 			for k, v in pairs(stack) do
 				if type(v) == "string" and v ~= "" then
-					stack[k] = minetest.decompress(v, "deflate", 9)
+					stack[k] = decompress(v)
 				end
 			end
 			list[i] = ItemStack(stack)
@@ -370,6 +378,11 @@ meshnode.create = function(pos, parent)
 		inventory_to_table(meta_tab.inventory)
 	end
 	if next(meta_tab) then
+		for k, v in pairs(meta_tab) do
+			if type(v) == "string" and v ~= "" then
+				meta_tab[k] = compress(v)
+			end
+		end
 		meta_str = minetest.serialize(meta_tab)
 	end
 	local ref = {
@@ -406,6 +419,11 @@ meshnode.restore = function(ref, parent)
 		local meta_tab = minetest.deserialize(ref.meta) or {}
 		if meta_tab.inventory then
 			inventory_from_table(meta_tab.inventory)
+		end
+		for k, v in pairs(meta_tab) do
+			if type(v) == "string" and v ~= "" then
+				meta_tab[k] = decompress(v)
+			end
 		end
 		meta:from_table(meta_tab)
 	end
@@ -458,6 +476,11 @@ meshnode.restore_all = function(parent, name)
 			local meta_tab = minetest.deserialize(data.ref.meta) or {}
 			if meta_tab.inventory then
 				inventory_from_table(meta_tab.inventory)
+			end
+			for k, v in pairs(meta_tab) do
+				if type(v) == "string" and v ~= "" then
+					meta_tab[k] = decompress(v)
+				end
 			end
 			meta:from_table(meta_tab)
 		end
