@@ -275,6 +275,12 @@ minetest.register_entity("meshnode:ctrl", {
 		end
 	end,
 	get_staticdata = function(self)
+		for k, v in pairs(self.nodes) do
+			if type(v) == "string" and v:len() > 0xffff then
+				minetest.log("error", "String too long for serialization!")
+				self.nodes[k] = ""
+			end
+		end
 		local data = {self.mesh_id, self.activated, self.nodes}
 		return minetest.serialize(data)
 	end,
@@ -525,4 +531,3 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 	end
 end)
-
