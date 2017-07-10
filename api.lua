@@ -336,7 +336,12 @@ meshnode.create = function(pos, parent)
 	if meta_tab.inventory then
 		for _, list in pairs(meta_tab.inventory) do
 			for i, stack in ipairs(list) do
-				list[i] = ItemStack(stack):to_string()
+				local str = ItemStack(stack):to_string()
+				if str:len() > 0xffff then
+					minetest.log("error", "String too long for serialization!")
+					str = ""
+				end
+				list[i] = str
 			end
 		end
 	end
