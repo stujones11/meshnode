@@ -131,7 +131,7 @@ For this reason I have exposed everything that I thought might be potentially
 useful under the `meshnode` namespace. I would hope that the source code is
 reasonably self-explanatory.
 
-Know Issues
+Known Issues
 -----------
 Active objects sometimes disappear following a re-start/connect. This could
 be for a number or reasons including /clearobjects or a minetest bug. For this
