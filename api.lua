@@ -7,6 +7,7 @@ meshnode.config = {
 	max_radius = 8,
 	show_in_creative = false,
 	enable_crafting = false,
+	disable_privilege = false,
 	fake_shading = false,
 	autoconf = false,
 }
