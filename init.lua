@@ -21,7 +21,7 @@ if is_singleplayer then
 	meshnode.config.max_radius = 16
 	meshnode.config.show_in_creative = true
 	meshnode.config.enable_crafting = true
-	mehsnode.config.disable_privilege = true
+	meshnode.config.disable_privilege = true
 	meshnode.config.fake_shading = true
 	meshnode.config.autoconf = true
 else
